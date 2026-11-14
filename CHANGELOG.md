@@ -4,6 +4,10 @@ All notable changes to `@trebired/code-insights` will be documented here.
 
 This project follows semantic versioning once published.
 
+## 0.1.3
+
+- Hotspot paths show a tooltip only when they are cut off. Every path carried a native `title`, so short paths got a tooltip repeating text already on screen. The peer and dev range for `@trebired/frontend` is now `^31.0.8`, which added overflow-only tooltips.
+
 ## 0.1.2
 
 - `hotspot_list` puts its rows in a `tbfm-line-list`, so the hairlines between rows come from the frontend preset.

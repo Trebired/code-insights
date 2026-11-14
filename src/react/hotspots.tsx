@@ -1,5 +1,5 @@
 import { Fragment } from "react";
-import { actionTrigger, card, Title } from "@trebired/frontend/react";
+import { actionTrigger, card, Title, tooltipAttrs } from "@trebired/frontend/react";
 
 import { copyFor, countFor } from "#0no5pre0uzbk";
 import type { Hotspot } from "#dzbbbwiozeyj";
@@ -26,7 +26,7 @@ function hotspotRow(hotspot: Hotspot, props: HotspotListProps) {
   const count = countFor(props.lang);
   const row = (
     <div className="tbfm-line-card" data-code-insights-hotspot="">
-    <span className="tbfm-line-card__lead tbfm-line-card__text" title={hotspot.path}>{hotspot.path}</span>
+    <span className="tbfm-line-card__lead tbfm-line-card__text" {...tooltipAttrs(hotspot.path, { overflow: true })}>{hotspot.path}</span>
     <span className="tbfm-line-card__main">
     <span
     aria-hidden="true"
