@@ -23,7 +23,7 @@ function levelButton(level: CodeMapLevel, current: CodeMapLevel, label: string) 
       "data-code-map-switch": level,
       size: "sm",
       type: "button",
-      variant: "chrome",
+      variant: "primary",
     } as any);
 }
 

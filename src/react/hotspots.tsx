@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { actionTrigger, card, Title } from "@trebired/frontend/react";
 
 import { copyFor, countFor } from "#0no5pre0uzbk";
@@ -55,7 +56,7 @@ function hotspot_list(props: HotspotListProps) {
         <span className="tbf-text-muted tbf-text-sm">{copy("hotspotsDescription")}</span>
         </div>
         {hotspots.length ? (
-            <div className="tbf-column">{hotspots.map((hotspot) => <div key={hotspot.path}>{hotspotRow(hotspot, props)}</div>)}</div>
+            <div className="tbfm-line-list">{hotspots.map((hotspot) => <Fragment key={hotspot.path}>{hotspotRow(hotspot, props)}</Fragment>)}</div>
               ) : (
                 <span className="tbf-text-muted">{copy("hotspotsEmpty")}</span>
             )}

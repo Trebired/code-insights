@@ -8,7 +8,7 @@
     }
   },
   "name": "@trebired/code-insights",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Fast repository insights for Bun apps: languages, file tree, file import graph, function call graph and hotspots, scanned by a native engine with live progress, plus an interactive code map for @trebired/frontend.",
   "type": "module",
   "private": false,
