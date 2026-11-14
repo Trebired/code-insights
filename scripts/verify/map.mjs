@@ -82,7 +82,31 @@ async function verifyClient(markup, data) {
   reloadCodeMaps(document);
   await settle();
   assert.deepEqual(fetched.at(-1), "/insights/graph?level=function", "a reload keeps the current level");
+  await verifyHiddenMap(markup, data);
   await window.happyDOM.close();
+}
+
+async function verifyHiddenMap(markup, data) {
+  const observers = [];
+  globalThis.ResizeObserver = class {
+    constructor(callback) { this.callback = callback; observers.push(this); }
+    observe() {}
+  };
+  document.body.innerHTML = markup;
+  globalThis.fetch = async() => ({ json: async() => ({ data }), ok: true });
+  const canvas = document.querySelector("svg[data-code-map-canvas]");
+  let box = { height: 0, left: 0, top: 0, width: 0 };
+  canvas.getBoundingClientRect = () => box;
+  const { bindCodeMaps } = await importDist("client/index.js");
+  bindCodeMaps(document);
+  await settle();
+  const transform = () => canvas.querySelector("g").getAttribute("transform");
+  const hidden = transform();
+  box = { height: 420, left: 0, top: 0, width: 360 };
+  for (const observer of observers) observer.callback([]);
+  await settle();
+  assert.notEqual(transform(), hidden, "a map bound inside a hidden tab refits once it is shown");
+  delete globalThis.ResizeObserver;
 }
 
 async function main() {

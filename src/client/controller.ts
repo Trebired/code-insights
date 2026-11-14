@@ -17,6 +17,7 @@ type MapState = {
   root: HTMLElement;
   selected: string | null;
   status: HTMLElement | null;
+  touched: boolean;
   transform: Transform;
 };
 
@@ -63,7 +64,10 @@ function draw(state: MapState, refit: boolean) {
   for (const node of graph.nodes) state.positions.set(node.id, { x: node.x || 0, y: node.y || 0 });
   state.graph = graph;
   state.rendered = render(state.canvas, graph);
-  if (refit) state.transform = fit(state.canvas, graph);
+  if (refit) {
+    state.transform = fit(state.canvas, graph);
+    state.touched = false;
+  }
   apply(state.rendered.viewport, state.transform);
   scaleLabels(state.rendered, state.transform.k);
   refreshHighlight(state);
@@ -128,7 +132,27 @@ function levelButtons(root: HTMLElement): HTMLElement[] {
   return [];
 }
 
-export { draw, levelButtons, load, onNodeClick, refreshHighlight };
+function refitOnResize(state: MapState) {
+  if (typeof ResizeObserver === "undefined") return;
+  let width = state.canvas.getBoundingClientRect().width;
+  new ResizeObserver(() => {
+      const next = state.canvas.getBoundingClientRect().width;
+      const wasHidden = width === 0;
+      width = next;
+      if (!next || !state.data || !state.graph) return;
+      if (wasHidden) {
+        state.positions.clear();
+        draw(state, true);
+        return;
+      }
+      if (state.touched || !state.rendered) return;
+      state.transform = fit(state.canvas, state.graph);
+      apply(state.rendered.viewport, state.transform);
+      scaleLabels(state.rendered, state.transform.k);
+  }).observe(state.canvas);
+}
+
+export { draw, levelButtons, load, onNodeClick, refitOnResize, refreshHighlight };
 export type { MapState };
 
 export function createState(root: HTMLElement, canvas: SVGSVGElement): MapState {
@@ -136,13 +160,14 @@ export function createState(root: HTMLElement, canvas: SVGSVGElement): MapState 
     canvas, data: null, filter: "", graph: null,
     level: root.getAttribute("data-code-map-level") === "function" ? "function" : "file",
     open: new Set(), positions: new Map(), rendered: null, root, selected: null,
-    status: root.querySelector<HTMLElement>("[data-code-map-status]"), transform: { k: 1, x: 0, y: 0 },
+    status: root.querySelector<HTMLElement>("[data-code-map-status]"), touched: false, transform: { k: 1, x: 0, y: 0 },
   };
 }
 
 export function bindState(state: MapState) {
   bindZoomPan(state.canvas, () => state.transform, (next) => {
       state.transform = next;
+      state.touched = true;
       if (!state.rendered) return;
       apply(state.rendered.viewport, next);
       scaleLabels(state.rendered, next.k);

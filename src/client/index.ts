@@ -1,4 +1,4 @@
-import { bindState, createState, levelButtons, load, onNodeClick, refreshHighlight, type MapState } from "./controller.js";
+import { bindState, createState, levelButtons, load, onNodeClick, refitOnResize, refreshHighlight, type MapState } from "./controller.js";
 
 const bound = new WeakMap<HTMLElement, MapState>();
 
@@ -41,6 +41,7 @@ function bindCodeMap(root: HTMLElement) {
   bindState(state);
   bindClicks(state);
   bindControls(state);
+  refitOnResize(state);
   void load(state, state.level);
 }
 
