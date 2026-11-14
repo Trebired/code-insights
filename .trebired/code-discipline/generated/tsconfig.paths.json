@@ -1,0 +1,87 @@
+{
+  "compilerOptions": {
+    "paths": {
+      "#02hgzisl4lml": [
+        "../../../scripts/verify/map.mjs"
+      ],
+      "#0no5pre0uzbk": [
+        "../../../src/shared/copy.ts"
+      ],
+      "#22m77i4dj5fp": [
+        "../../../src/server/detect.ts"
+      ],
+      "#303418ul1z3g": [
+        "../../logger/config.ts"
+      ],
+      "#41o0wnx689x5": [
+        "../../../src/react/index.ts"
+      ],
+      "#4haxn3jxu4sy": [
+        "../../../scripts/verify/fixtures.mjs"
+      ],
+      "#4rykm4039xd0": [
+        "../../../src/client/layout.ts"
+      ],
+      "#5polaw6ky0ly": [
+        "../../../src/server/index.ts"
+      ],
+      "#5r46asnbaeq8": [
+        "../../../src/shared/constants.ts"
+      ],
+      "#5wcv4f8x3q8o": [
+        "../../../scripts/prepare-dist.mjs"
+      ],
+      "#6fzcxgl48cz0": [
+        "../../../scripts/verify/pack.mjs"
+      ],
+      "#8q9i43btblyn": [
+        "../../../src/server/map.ts"
+      ],
+      "#avt5wn6hnksy": [
+        "../../../src/client/index.ts"
+      ],
+      "#c8zsiic7hx7j": [
+        "../../../scripts/build/native.mjs"
+      ],
+      "#dzbbbwiozeyj": [
+        "../../../src/shared/types.ts"
+      ],
+      "#ecw1o3q4od9i": [
+        "../../../src/client/controller.ts"
+      ],
+      "#f4ia2a7oxdav": [
+        "../../../src/react/hotspots.tsx"
+      ],
+      "#keqaj3m9grhc": [
+        "../../../src/client/model.ts"
+      ],
+      "#m510zuom68mr": [
+        "../../../scripts/verify/scan.mjs"
+      ],
+      "#m5e0hzrag0os": [
+        "../../../src/server/process.ts"
+      ],
+      "#mf63etd57d6y": [
+        "../../../src/server/scan.ts"
+      ],
+      "#mwlgzf51zmn1": [
+        "../../../src/client/viewport.ts"
+      ],
+      "#pqswod1zjlt6": [
+        "../../../src/client/render.ts"
+      ],
+      "#sban114wypnk": [
+        "../../../src/server/binary.ts"
+      ],
+      "#sejy8ddz8m8c": [
+        "../../../src/server/logging.ts"
+      ],
+      "#xovak2qsdb8c": [
+        "../../../src/react/code_map.tsx"
+      ],
+      "#yrc1d9ccepw6": [
+        "../../../src/index.ts"
+      ]
+    }
+  }
+}

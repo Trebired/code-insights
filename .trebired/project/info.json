@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "category": "package",
+  "subcategory": "runtime",
+  "status": "active",
+  "npm": "@trebired/code-insights",
+  "description": {
+    "en": "Fast repository insights: languages, file tree, import and call graphs, and hotspots, with live progress and an interactive code map.",
+    "cs": "Rychlý přehled o repozitáři: jazyky, strom souborů, grafy importů a volání a rizikové soubory, s průběhem v reálném čase a interaktivní mapou kódu."
+  }
+}

@@ -1,0 +1,119 @@
+name: Publish Package
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Git ref to build and optionally publish
+        required: false
+        default: main
+      publish_package:
+        description: Publish package after building and verifying the native matrix
+        required: false
+        default: false
+        type: boolean
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: publish-package-${{ github.event.inputs.ref || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  build-native:
+    name: Build engine ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-x64-gnu
+            os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - name: linux-arm64-gnu
+            os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.ref || github.ref }}
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Test engine
+        run: bun run verify:native
+
+      - name: Build engine
+        run: bun run build:native --target ${{ matrix.target }}
+
+      - name: Upload engine
+        uses: actions/upload-artifact@v4
+        with:
+          name: engine-${{ matrix.name }}
+          path: native/${{ matrix.name }}/code-insights
+          if-no-files-found: error
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && github.event.inputs.publish_package == 'true')
+    needs: build-native
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.ref || github.ref }}
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+
+      - name: Verify pushed tag matches package version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          PKG_VERSION=$(bun -e "console.log(require('./package.json').version)")
+          TAG_NAME="${GITHUB_REF_NAME}"
+          EXPECTED_TAG="v${PKG_VERSION}"
+          if [ "$TAG_NAME" != "$EXPECTED_TAG" ]; then
+            echo "release tag $TAG_NAME does not match package.json version $PKG_VERSION"
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Download engines
+        uses: actions/download-artifact@v4
+        with:
+          path: engine-artifacts
+
+      - name: Collect engines
+        run: |
+          for name in linux-x64-gnu linux-arm64-gnu; do
+            mkdir -p "native/${name}"
+            cp "engine-artifacts/engine-${name}/code-insights" "native/${name}/code-insights"
+            chmod 755 "native/${name}/code-insights"
+          done
+          ls -la native/linux-*
+
+      - name: Verify and build package
+        run: bun run prepublishOnly
+
+      - name: Publish package
+        env:
+          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: bun publish --access public
