@@ -75,6 +75,27 @@ type Hotspot = {
   score: number;
 };
 
+type LicenseMatch = {
+  confidence: number;
+  id: string;
+  name: string;
+  osi_approved: boolean;
+  path: string | null;
+  source: "file" | "identifier" | "manifest" | "notice";
+  spdx_url: string | null;
+  url: string | null;
+};
+
+type LicenseAgreement = "match" | "mismatch" | "no-file" | "none" | "partial" | "undeclared" | "unverified";
+
+type LicenseInfo = {
+  agreement: LicenseAgreement;
+  declared: string | null;
+  declared_path: string | null;
+  files: string[];
+  licenses: LicenseMatch[];
+};
+
 type CodeInsightsResult = {
   commit: string;
   empty: boolean;
@@ -83,6 +104,7 @@ type CodeInsightsResult = {
   hotspots?: Hotspot[];
   imports?: ImportGraph;
   languages: LanguageTotal[];
+  license?: LicenseInfo;
   ref: string;
   scanned_at: string;
   skipped: { binary: number; documentation: number; generated: number; unparsed: number; vendored: number };
@@ -140,6 +162,9 @@ export type {
   Hotspot,
   ImportGraph,
   LanguageTotal,
+  LicenseAgreement,
+  LicenseInfo,
+  LicenseMatch,
   ScanPhase,
   ScanProgress,
   TreeNode,

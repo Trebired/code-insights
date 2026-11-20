@@ -8,6 +8,7 @@ type CodeMapProps = {
   dataUrl: string;
   extendGroup?: string;
   extendId?: string;
+  fullscreen?: boolean;
   hrefTemplate?: string;
   id?: string;
   lang?: string;
@@ -67,6 +68,8 @@ function code_map(props: CodeMapProps) {
       contentClassName: "tbf-column tbf-gap-sm",
       extendGroup: props.extendGroup,
       extendId: props.extendId,
+      fullscreen: props.fullscreen === true,
+      lang: props.lang,
       title: props.title ?? copy("codeMap"),
       toolbarContent: toolbar,
     } as any);

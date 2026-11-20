@@ -18,7 +18,8 @@ async function verifyProgressAndResult(dir) {
   assert.equal(result.version, 1);
   assert.equal(result.totals.count, 6);
   const started = phases.filter((event) => event.state === "start").map((event) => event.phase);
-  assert.deepEqual(started, ["listing", "languages", "tree", "imports", "functions", "hotspots"]);
+  assert.deepEqual(started, ["listing", "license", "languages", "tree", "imports", "functions", "hotspots"]);
+  assert.deepEqual(result.license.licenses, []);
   for (let index = 1; index < progress.length; index += 1) {
     assert.ok(progress[index].percent >= progress[index - 1].percent, "progress never goes backwards");
   }
@@ -42,6 +43,41 @@ async function verifyPhasesAndAbort(dir) {
   await assert.rejects(scanRepository({ gitDir: path.join(tempRoot, "missing") }), (error) => error.code === "not-a-repository");
 }
 
+const MIT_TEXT = `MIT License
+
+Copyright (c) 2026 Example Ltd
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+`;
+
+async function verifyLicense() {
+  const dir = await createRepository(path.join(tempRoot, "licensed"), { "LICENSE.md": MIT_TEXT, "index.js": "module.exports = 1;\n" });
+  const result = await scanRepository({ gitDir: dir, phases: ["license"] });
+  assert.equal(result.license.licenses.length, 1);
+  const [match] = result.license.licenses;
+  assert.deepEqual(
+    { id: match.id, osi: match.osi_approved, path: match.path, source: match.source },
+    { id: "MIT", osi: true, path: "LICENSE.md", source: "file" }
+  );
+  assert.deepEqual(result.license.files, ["LICENSE.md"]);
+}
+
 async function verifyDetect() {
   assert.equal((await detectLanguage({ content: "fn main() {}", path: "src/main.rs" })).name, "Rust");
   assert.equal((await detectLanguage({ content: "#!/usr/bin/env python3\nprint(1)", path: "bin/tool" })).name, "Python");
@@ -53,6 +89,7 @@ async function main() {
   await verifyProgressAndResult(dir);
   await verifyPhasesAndAbort(dir);
   await verifyDetect();
+  await verifyLicense();
   log.info("verify.scan", "Scan verification succeeded.");
 }
 

@@ -25,9 +25,9 @@ const TRACK_STYLE = {
 function hotspotRow(hotspot: Hotspot, props: HotspotListProps) {
   const count = countFor(props.lang);
   const row = (
-    <div className="tbfm-line-card" data-code-insights-hotspot="">
-    <span className="tbfm-line-card__lead tbfm-line-card__text" {...tooltipAttrs(hotspot.path, { overflow: true })}>{hotspot.path}</span>
-    <span className="tbfm-line-card__main">
+    <div className="tbfm-card-03" data-code-insights-hotspot="">
+    <span className="tbfm-card-03__lead tbfm-card-03__text" {...tooltipAttrs(hotspot.path, { overflow: true })}>{hotspot.path}</span>
+    <span className="tbfm-card-03__main">
     <span
     aria-hidden="true"
     style={TRACK_STYLE}>
@@ -35,7 +35,7 @@ function hotspotRow(hotspot: Hotspot, props: HotspotListProps) {
     style={{ background: "var(--text-color-muted)", display: "block", height: "100%", width: `${Math.max(2, Math.min(100, hotspot.score))}%` }} />
     </span>
     </span>
-    <span className="tbfm-line-card__end tbf-text-muted tbf-text-sm">
+    <span className="tbfm-card-03__end tbf-text-muted tbf-text-sm">
     {count(hotspot.commits, "commits")} · {count(hotspot.lines, "lines")}
     </span>
     </div>
@@ -53,17 +53,19 @@ function hotspot_list(props: HotspotListProps) {
         <>
         <div className="tbf-column tbf-gap-xs">
         <Title>{props.title || copy("hotspots")}</Title>
-        <span className="tbf-text-muted tbf-text-sm">{copy("hotspotsDescription")}</span>
+        <p className="tbf-text-muted">{copy("hotspotsDescription")}</p>
         </div>
         {hotspots.length ? (
-            <div className="tbfm-line-list">{hotspots.map((hotspot) => <Fragment key={hotspot.path}>{hotspotRow(hotspot, props)}</Fragment>)}</div>
-              ) : (
-                <span className="tbf-text-muted">{copy("hotspotsEmpty")}</span>
-            )}
-            </>
-          ),
-      });
-    }
+            <div className="tbf-column tbf-divided">
+            {hotspots.map((hotspot) => <Fragment key={hotspot.path}>{hotspotRow(hotspot, props)}</Fragment>)}
+            </div>
+          ) : (
+            <span className="tbf-text-muted">{copy("hotspotsEmpty")}</span>
+        )}
+        </>
+      ),
+  });
+}
 
-    export { hotspot_list };
-    export type { HotspotListProps };
+export { hotspot_list };
+export type { HotspotListProps };

@@ -86,7 +86,7 @@ fn typescript_imports_aliases_and_calls() {
     .filter(|event| event["type"] == "phase" && event["state"] == "start")
     .map(|event| event["phase"].as_str().unwrap())
     .collect();
-    assert_eq!(phases, vec!["listing", "languages", "tree", "imports", "functions", "hotspots"]);
+    assert_eq!(phases, vec!["listing", "license", "languages", "tree", "imports", "functions", "hotspots"]);
     assert_eq!(events.last().unwrap()["type"], "done");
 }
 
@@ -197,4 +197,52 @@ fn empty_repository_and_bad_path() {
     ]).output().unwrap();
     assert!(!output.status.success());
     assert!(String::from_utf8_lossy(&output.stdout).contains("not-a-repository"));
+}
+
+fn spdx_text(id: &str) -> String {
+    let path = concat!(env!("CARGO_MANIFEST_DIR"), "/../vendor/spdx-license-list/spdx-full.json");
+    let list: serde_json::Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
+    list[id]["licenseText"].as_str().unwrap().replace("<year> <copyright holders>", "2026 Example Ltd")
+}
+
+#[test]
+fn licenses_from_files_and_manifests() {
+    let mit = spdx_text("MIT");
+    let apache = spdx_text("Apache-2.0");
+    let dir = fixture("license", &[
+            ("LICENSE-MIT", mit.as_str()),
+            ("LICENSE-APACHE.txt", apache.as_str()),
+            ("Cargo.toml", "[package]\nname = \"x\"\nlicense = \"MIT OR Apache-2.0\"\n"),
+            ("docs/LICENSE", "not a root license"),
+            ("src/license.rs", "fn main() {}"),
+    ]);
+    let (result, _) = scan(&dir);
+    let license = &result["license"];
+    let ids: Vec<&str> = license["licenses"].as_array().unwrap().iter().map(|item| item["id"].as_str().unwrap()).collect();
+    assert_eq!(ids, vec!["Apache-2.0", "MIT"], "{}", license);
+    assert_eq!(license["declared"], "MIT OR Apache-2.0");
+    assert_eq!(license["files"], serde_json::json!(["LICENSE-APACHE.txt", "LICENSE-MIT"]));
+    assert_eq!(license["licenses"][1]["source"], "file");
+    assert_eq!(license["licenses"][1]["osi_approved"], true);
+    assert_eq!(license["licenses"][1]["url"], "https://opensource.org/license/mit/");
+    assert_eq!(license["licenses"][1]["spdx_url"], "https://spdx.org/licenses/MIT.html");
+    assert_eq!(license["declared_path"], "Cargo.toml");
+    assert_eq!(license["agreement"], "match");
+
+    let declared_only = fixture("license-manifest", &[("package.json", "{ \"license\": \"AGPL-3.0-only\" }"), ("index.js", "1;")]);
+    let (result, _) = scan(&declared_only);
+    assert_eq!(result["license"]["licenses"][0]["id"], "AGPL-3.0-only");
+    assert_eq!(result["license"]["licenses"][0]["source"], "manifest");
+    assert_eq!(result["license"]["licenses"][0]["name"], "GNU Affero General Public License v3.0 only");
+    assert_eq!(result["license"]["agreement"], "no-file");
+
+    let differing = fixture("license-mismatch", &[("LICENSE", mit.as_str()), ("package.json", "{ \"license\": \"ISC\" }")]);
+    let (result, _) = scan(&differing);
+    assert_eq!(result["license"]["licenses"][0]["id"], "MIT");
+    assert_eq!(result["license"]["agreement"], "mismatch");
+
+    let undeclared = fixture("license-undeclared", &[("COPYING", "SPDX-License-Identifier: Apache-2.0\n")]);
+    let (result, _) = scan(&undeclared);
+    assert_eq!(result["license"]["licenses"][0]["source"], "identifier");
+    assert_eq!(result["license"]["agreement"], "undeclared");
 }

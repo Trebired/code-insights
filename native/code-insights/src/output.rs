@@ -134,6 +134,27 @@ pub struct Hotspot {
     pub score: f64,
 }
 
+#[derive(Clone, Debug, Serialize)]
+pub struct LicenseMatch {
+    pub id: String,
+    pub name: String,
+    pub osi_approved: bool,
+    pub source: &'static str,
+    pub path: Option<String>,
+    pub confidence: f64,
+    pub url: Option<String>,
+    pub spdx_url: Option<String>,
+}
+
+#[derive(Clone, Debug, Default, Serialize)]
+pub struct LicenseOutput {
+    pub licenses: Vec<LicenseMatch>,
+    pub declared: Option<String>,
+    pub declared_path: Option<String>,
+    pub agreement: &'static str,
+    pub files: Vec<String>,
+}
+
 #[derive(Clone, Debug, Default, Serialize)]
 pub struct ScanResult {
     pub version: u32,
@@ -155,5 +176,7 @@ pub struct ScanResult {
     pub functions: Option<FunctionGraph>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub hotspots: Option<Vec<Hotspot>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub license: Option<LicenseOutput>,
     pub timings_ms: BTreeMap<String, u64>,
 }

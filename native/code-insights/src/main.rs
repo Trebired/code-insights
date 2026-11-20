@@ -6,6 +6,7 @@ mod hotspots;
 mod imports;
 mod jsonc;
 mod lang;
+mod license;
 mod lines;
 mod output;
 mod parse;

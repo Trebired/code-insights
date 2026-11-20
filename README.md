@@ -1,8 +1,8 @@
 # @trebired/code-insights
 
-Repository insights for Bun applications, scanned by a native engine that reads a git repository directly: languages, the file tree, a file import graph, a function call graph and hotspots, with live progress, plus an interactive code map and hotspot list for `@trebired/frontend`.
+Repository insights for Bun applications, scanned by a native engine that reads a git repository directly: licenses, languages, the file tree, a file import graph, a function call graph and hotspots, with live progress, plus an interactive code map and hotspot list for `@trebired/frontend`.
 
-The package owns reading the repository at a ref, language detection, line counts, vendored and generated file rules, the tree, import resolution, call resolution, churn, the progress stream, the result format, the code map data, and the code map and hotspot interface. The application owns where repositories live, when a scan runs, where results are stored, who may see them, and the routes that serve them. The package does not own a job queue, storage, permissions, or any HTTP route.
+The package owns reading the repository at a ref, license detection, language detection, line counts, vendored and generated file rules, the tree, import resolution, call resolution, churn, the progress stream, the result format, the code map data, and the code map and hotspot interface. The application owns where repositories live, when a scan runs, where results are stored, who may see them, and the routes that serve them. The package does not own a job queue, storage, permissions, or any HTTP route.
 
 ## Install
 
@@ -53,13 +53,38 @@ A scan runs these phases in order. Each one reports `{ phase, done, total, perce
 | Phase | Result |
 | --- | --- |
 | `listing` | the commit and every tree entry |
+| `license` | `license`: licenses found in root license files and declared in manifests |
 | `languages` | `languages`, `files`, `totals`, `unknown`, `skipped` |
 | `tree` | `tree.nested` and `tree.ascii` |
 | `imports` | `imports`: files as nodes, resolved imports as edges |
 | `functions` | `functions`: definitions as nodes, resolved calls as edges |
 | `hotspots` | `hotspots`: code lines times commits that touched the file |
 
-`phases` limits a scan to the phases it names. `listing` always runs, `functions` brings `imports` with it, and `imports` and `hotspots` bring `languages`.
+`phases` limits a scan to the phases it names. `listing` always runs, `license` runs only when named or when `phases` is left out, `functions` brings `imports` with it, and `imports` and `hotspots` bring `languages`.
+
+### Licenses
+
+The `license` phase reads root files named `LICENSE`, `LICENCE`, `COPYING`, `UNLICENSE`, `COPYRIGHT` and their variants (`LICENSE.md`, `LICENSE-MIT`, `MIT-LICENSE`, `COPYING.LESSER`), and the license declared in a root `package.json`, `composer.json`, `Cargo.toml` or `pyproject.toml`. Each file resolves in this order:
+
+1. An `SPDX-License-Identifier:` line names the license outright.
+2. The text matches one of the 727 licenses on the SPDX License List with a word overlap of 90% or more, after copyright lines, URLs, markdown and British spellings are normalised away.
+3. A file holding several license texts reports each license whose text it contains.
+4. A short notice, such as "Licensed under the Apache License, Version 2.0", names its license.
+5. The manifest declaration applies, and without one the file reports `NOASSERTION`.
+
+A manifest declaration decides between near-identical texts: `GPL-3.0-only` and `GPL-3.0-or-later` share one text, so without a declaration the result is the family, `GPL-3.0`. Deprecated SPDX identifiers are never returned as a match. Each entry in `license.licenses` carries `id`, `name`, `osi_approved`, `source` (`identifier`, `file`, `notice` or `manifest`), `path`, `confidence`, `url` (the license steward's page from the SPDX License List) and `spdx_url` (`https://spdx.org/licenses/<id>.html`).
+
+`license.declared` and `license.declared_path` name the manifest declaration, and `license.agreement` compares it with the license files:
+
+| Agreement | Meaning |
+| --- | --- |
+| `match` | the files hold exactly the declared licenses |
+| `partial` | the files and the declaration share some licenses |
+| `mismatch` | the files hold other licenses than the declaration |
+| `unverified` | a license file exists but no text in it was recognised |
+| `undeclared` | a license file exists and no manifest declares a license |
+| `no-file` | a manifest declares a license and no license file exists |
+| `none` | neither exists |
 
 ### Languages
 
@@ -115,7 +140,7 @@ The package logs through `@trebired/logger-adapter` under `trebired.code-insight
 
 ### Third-Party Code
 
-The engine contains hyperpolyglot (MIT OR Apache-2.0), vendored with its detectors made public and shipped with its licence in `native/vendor/hyperpolyglot/LICENSE-MIT`, which carries GitHub Linguist's language data (MIT), and Tree-sitter with its TypeScript, JavaScript, Python, Rust and Go grammars (MIT). The client uses d3-force (ISC).
+The engine contains hyperpolyglot (MIT OR Apache-2.0), vendored with its detectors made public and shipped with its licence in `native/vendor/hyperpolyglot/LICENSE-MIT`, which carries GitHub Linguist's language data (MIT), Tree-sitter with its TypeScript, JavaScript, Python, Rust and Go grammars (MIT), and the license texts of the SPDX License List from `spdx-license-list` (CC0-1.0), vendored in `native/vendor/spdx-license-list` and compiled into the engine as word sets. The client uses d3-force (ISC).
 
 ## Public API
 
@@ -137,4 +162,5 @@ This package does not:
 - run on macOS, Windows or musl Linux without a custom engine build;
 - resolve calls through variables, interfaces, callbacks or dynamic dispatch;
 - parse languages other than TypeScript, JavaScript, Python, Rust and Go for imports and calls;
-- count vendored, generated, binary or documentation files in language totals.
+- count vendored, generated, binary or documentation files in language totals;
+- read license files below the repository root, or license texts written in a language other than English.

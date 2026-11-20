@@ -14,6 +14,7 @@ use crate::resolve::Resolver;
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Phase {
     Listing,
+    License,
     Languages,
     Tree,
     Imports,
@@ -22,11 +23,12 @@ pub enum Phase {
 }
 
 impl Phase {
-    pub const ALL: [Phase; 6] = [Phase::Listing, Phase::Languages, Phase::Tree, Phase::Imports, Phase::Functions, Phase::Hotspots];
+    pub const ALL: [Phase; 7] = [Phase::Listing, Phase::License, Phase::Languages, Phase::Tree, Phase::Imports, Phase::Functions, Phase::Hotspots];
 
     pub fn name(self) -> &'static str {
         match self {
             Phase::Listing => "listing",
+            Phase::License => "license",
             Phase::Languages => "languages",
             Phase::Tree => "tree",
             Phase::Imports => "imports",
@@ -38,6 +40,7 @@ impl Phase {
     pub fn weight(self) -> f64 {
         match self {
             Phase::Listing => 5.0,
+            Phase::License => 1.0,
             Phase::Languages => 40.0,
             Phase::Tree => 5.0,
             Phase::Imports => 30.0,
@@ -51,13 +54,13 @@ pub fn parse_phases(input: Option<&str>) -> Vec<Phase> {
     let Some(input) = input.filter(|value| !value.trim().is_empty()) else { return Phase::ALL.to_vec() };
     let wanted: Vec<&str> = input.split(',').map(str::trim).collect();
     let mut phases: Vec<Phase> = Phase::ALL.iter().copied().filter(|phase| *phase == Phase::Listing || wanted.contains(&phase.name())).collect();
-    if phases.contains(&Phase::Functions) && !phases.contains(&Phase::Imports) {
-        phases.insert(phases.iter().position(|phase| *phase == Phase::Functions).unwrap(), Phase::Imports);
+    if phases.contains(&Phase::Functions) {
+        phases.push(Phase::Imports);
     }
-    if !phases.contains(&Phase::Languages) && phases.iter().any(|phase| matches!(phase, Phase::Imports | Phase::Hotspots)) {
-        phases.insert(1, Phase::Languages);
+    if phases.iter().any(|phase| matches!(phase, Phase::Imports | Phase::Hotspots)) {
+        phases.push(Phase::Languages);
     }
-    phases
+    Phase::ALL.iter().copied().filter(|phase| phases.contains(phase)).collect()
 }
 
 pub struct ScanOptions {
@@ -211,6 +214,9 @@ pub fn scan_repository(options: &ScanOptions, reporter: &Reporter) -> Result<Sca
     let mut gitattributes = None;
     if let Some(entry) = blobs.iter().find(|entry| entry.path == ".gitattributes") {
         git.read_blobs(&[entry.object.clone()], |_, content| gitattributes = Some(String::from_utf8_lossy(&content).to_string()))?;
+    }
+    if wants(Phase::License) {
+        result.license = Some(timed(&mut timings, reporter, Phase::License, 1, || crate::license::detect(&git, &entries))?);
     }
     let filter = Filter::new(gitattributes.as_deref());
     let mut detected: Vec<Detected> = Vec::new();
